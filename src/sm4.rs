@@ -6,13 +6,13 @@ pub fn sm4_ecb_encrypt_byte<'a>(ins: &'a [u8], key: &'a [u8]) -> Result<Vec<u8>,
     sm4_ecb(&key, ins, 0)
 }
 
-pub fn sm4_ecb_encrypt_hex<'a>(plain: &'a str, secret_key: &'a str) -> String {
+pub fn sm4_ecb_encrypt_hex<'a>(plain: &'a str, secret_key: &'a str) -> Result<String,String> {
     let string = String::from(plain);
     let s = string.as_bytes();
     let key = hex::decode(secret_key).unwrap();
-    let enc_msg = sm4_ecb_encrypt_byte(s, &key);
+    let enc_msg = sm4_ecb_encrypt_byte(s, &key)?;
 
-    hex::encode_upper(enc_msg)
+    Ok(hex::encode_upper(enc_msg))
 }
 
 // ecb decrypt
@@ -35,14 +35,14 @@ pub fn sm4_cbc_encrypt_byte<'a>(ins: &'a [u8], key: &'a [u8], iv: &'a [u8]) -> R
     sm4_cbc(&key, &iv, ins, 0)
 }
 
-pub fn sm4_cbc_encrypt_hex<'a>(plain: &'a str, secret_key: &'a str, secret_iv: &'a str) -> String {
+pub fn sm4_cbc_encrypt_hex<'a>(plain: &'a str, secret_key: &'a str, secret_iv: &'a str) -> Result<String,String> {
     let string = String::from(plain);
     let s = string.as_bytes();
     let key = hex::decode(secret_key).unwrap();
     let iv = hex::decode(secret_iv).unwrap();
-    let enc_msg = sm4_cbc_encrypt_byte(s, &key, &iv);
+    let enc_msg = sm4_cbc_encrypt_byte(s, &key, &iv)?;
 
-    hex::encode_upper(enc_msg)
+    Ok(hex::encode_upper(enc_msg))
 }
 
 // cbc decrypt
@@ -71,7 +71,7 @@ mod tests {
         let plain_str = "hello world, this is sm4 test!";
         let cipher_str = "9AA0BCBF487682AEAF7C640230568083452F4EDE1B8E265CC07A2F8CE07FC2E7";
 
-        let cipher = sm4_ecb_encrypt_hex(plain_str, key);
+        let cipher = sm4_ecb_encrypt_hex(plain_str, key).unwrap();
         assert_eq!(cipher_str, cipher);
 
         let plain = sm4_ecb_decrypt_hex(cipher_str, key).unwrap();
@@ -85,7 +85,7 @@ mod tests {
         let plain_str = "hello world, this is sm4 test!";
         let cipher_str = "92662AD8A11D165EEF617AE3EDC4F9D4012A4C3CE7F42B15F26D1DA404CD97E0";
 
-        let cipher = sm4_cbc_encrypt_hex(plain_str, key, iv);
+        let cipher = sm4_cbc_encrypt_hex(plain_str, key, iv).unwrap();
         assert_eq!(cipher_str, cipher);
 
         let plain = sm4_cbc_decrypt_hex(cipher_str, key, iv).unwrap();
