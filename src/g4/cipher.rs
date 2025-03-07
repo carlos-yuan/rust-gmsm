@@ -169,7 +169,7 @@ fn pkcs7_padding(src: &[u8]) -> Vec<u8> {
     aa
 }
 
-fn pkcs7_un_padding(src: Vec<u8>) -> Vec<u8> {
+fn pkcs7_un_padding(src: Vec<u8>) -> Result<Vec<u8>,String> {
     let length = src.len();
     let unpadding = src[length - 1] as u32;
 
@@ -177,15 +177,15 @@ fn pkcs7_un_padding(src: Vec<u8>) -> Vec<u8> {
 
     for i in 0..unpadding {
         if pad[i as usize] != unpadding as u8 {
-            panic!("Invalid pkcs7 padding (pad[i] != unpadding)");
+            return Err("Invalid pkcs7 padding (pad[i] != unpadding)".to_string());
         }
     }
 
-    Vec::from(&src[..(length - unpadding as usize)])
+    Ok(Vec::from(&src[..(length - unpadding as usize)]))
 }
 
 //sm4 ecb mode
-pub fn sm4_ecb<'a>(key: &'a [u8], ins: &'a [u8], mode: u32) -> Vec<u8> {
+pub fn sm4_ecb<'a>(key: &'a [u8], ins: &'a [u8], mode: u32) ->Result<Vec<u8>,String> {
     if key.len() != BLOCKSIZE {
         panic!("SM4: invalid key size ")
     }
@@ -218,7 +218,7 @@ pub fn sm4_ecb<'a>(key: &'a [u8], ins: &'a [u8], mode: u32) -> Vec<u8> {
         return pkcs7_un_padding(out);
     }
 
-    out
+    Ok(out)
 }
 
 fn xor<'a>(ins: &'a [u8], iv: &'a [u8]) -> Vec<u8> {
@@ -236,7 +236,7 @@ fn xor<'a>(ins: &'a [u8], iv: &'a [u8]) -> Vec<u8> {
 }
 
 //sm4 cbc mode
-pub fn sm4_cbc<'a>(key: &'a [u8], key_iv: &'a [u8], ins: &'a [u8], mode: u32) -> Vec<u8> {
+pub fn sm4_cbc<'a>(key: &'a [u8], key_iv: &'a [u8], ins: &'a [u8], mode: u32) -> Result<Vec<u8>,String> {
     if key.len() != BLOCKSIZE {
         panic!("SM4: invalid key size in sm4_cbc")
     }
@@ -275,5 +275,5 @@ pub fn sm4_cbc<'a>(key: &'a [u8], key_iv: &'a [u8], ins: &'a [u8], mode: u32) ->
         return pkcs7_un_padding(out);
     }
 
-    out
+    Ok(out)
 }
