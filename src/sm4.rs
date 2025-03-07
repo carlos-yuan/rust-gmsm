@@ -2,7 +2,7 @@ use crate::g4::cipher::{sm4_ecb, sm4_cbc};
 
 // ecb encrypt
 
-pub fn sm4_ecb_encrypt_byte<'a>(ins: &'a [u8], key: &'a [u8]) -> Vec<u8> {
+pub fn sm4_ecb_encrypt_byte<'a>(ins: &'a [u8], key: &'a [u8]) -> Result<Vec<u8>,String> {
     sm4_ecb(&key, ins, 0)
 }
 
@@ -17,21 +17,21 @@ pub fn sm4_ecb_encrypt_hex<'a>(plain: &'a str, secret_key: &'a str) -> String {
 
 // ecb decrypt
 
-pub fn sm4_ecb_decrypt_byte<'a>(ins: &'a [u8], key: &'a [u8]) -> Vec<u8> {
+pub fn sm4_ecb_decrypt_byte<'a>(ins: &'a [u8], key: &'a [u8]) -> Result<Vec<u8>,String> {
     sm4_ecb(&key, ins, 1)
 }
 
-pub fn sm4_ecb_decrypt_hex<'a>(cipher: &'a str, secret_key: &'a str) -> String {
+pub fn sm4_ecb_decrypt_hex<'a>(cipher: &'a str, secret_key: &'a str) -> Result<String,String> {
     let s = hex::decode(cipher).unwrap();
     let key = hex::decode(secret_key.clone()).unwrap();
-    let dec_msg = sm4_ecb_decrypt_byte(&s, &key);
+    let dec_msg = sm4_ecb_decrypt_byte(&s, &key)?;
 
-    String::from_utf8_lossy(&dec_msg).to_string()
+    Ok(String::from_utf8_lossy(&dec_msg).to_string())
 }
 
 // cbc encrypt
 
-pub fn sm4_cbc_encrypt_byte<'a>(ins: &'a [u8], key: &'a [u8], iv: &'a [u8]) -> Vec<u8> {
+pub fn sm4_cbc_encrypt_byte<'a>(ins: &'a [u8], key: &'a [u8], iv: &'a [u8]) -> Result<Vec<u8>,String> {
     sm4_cbc(&key, &iv, ins, 0)
 }
 
@@ -47,17 +47,17 @@ pub fn sm4_cbc_encrypt_hex<'a>(plain: &'a str, secret_key: &'a str, secret_iv: &
 
 // cbc decrypt
 
-pub fn sm4_cbc_decrypt_byte<'a>(ins: &'a [u8], key: &'a [u8], iv: &'a [u8]) -> Vec<u8> {
+pub fn sm4_cbc_decrypt_byte<'a>(ins: &'a [u8], key: &'a [u8], iv: &'a [u8]) -> Result<Vec<u8>,String> {
     sm4_cbc(&key, &iv, ins, 1)
 }
 
-pub fn sm4_cbc_decrypt_hex<'a>(cipher: &'a str, secret_key: &'a str, secret_iv: &'a str) -> String {
+pub fn sm4_cbc_decrypt_hex<'a>(cipher: &'a str, secret_key: &'a str, secret_iv: &'a str) -> Result<String,String> {
     let s = hex::decode(cipher).unwrap();
     let key = hex::decode(secret_key.clone()).unwrap();
     let iv = hex::decode(secret_iv).unwrap();
-    let dec_msg = sm4_cbc_decrypt_byte(&s, &key, &iv);
+    let dec_msg = sm4_cbc_decrypt_byte(&s, &key, &iv)?;
 
-    String::from_utf8_lossy(&dec_msg).to_string()
+    Ok(String::from_utf8_lossy(&dec_msg).to_string())
 }
 
 
@@ -74,7 +74,7 @@ mod tests {
         let cipher = sm4_ecb_encrypt_hex(plain_str, key);
         assert_eq!(cipher_str, cipher);
 
-        let plain = sm4_ecb_decrypt_hex(cipher_str, key);
+        let plain = sm4_ecb_decrypt_hex(cipher_str, key).unwrap();
         assert_eq!(plain, plain_str);
     }
 
@@ -88,7 +88,7 @@ mod tests {
         let cipher = sm4_cbc_encrypt_hex(plain_str, key, iv);
         assert_eq!(cipher_str, cipher);
 
-        let plain = sm4_cbc_decrypt_hex(cipher_str, key, iv);
+        let plain = sm4_cbc_decrypt_hex(cipher_str, key, iv).unwrap();
         assert_eq!(plain, plain_str);
     }
 }
