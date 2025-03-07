@@ -3,7 +3,11 @@ use crate::g2::p256::{Sm2P256Curve, CurveParams, CURVE_N};
 use crate::g2::consts::*;
 use crate::g3::digest::{sm3sum, Digest};
 use crate::utils::slice::*;
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::ops::{Sub, Add};
+use std::process;
+use std::hash::{Hash, Hasher};
+use std::collections::hash_map::DefaultHasher;
 use lazy_static::lazy_static;
 
 lazy_static! {
@@ -27,7 +31,7 @@ pub struct PrivateKey {
 pub fn generate_key() -> PrivateKey {
     let c = Sm2P256Curve::new();
     let params = c.params();
-    let b: Vec<u8> = (0..BITSIZE / 8 + 8).map(|_| { rand::random::<u8>() }).collect();
+    let b: Vec<u8> = (0..BITSIZE / 8 + 8).map(|_| { generate_seed() }).collect();
     // fix random
     // b = hex::decode("b0e289d068d40ad9bc6118b2e000c05ae3af93c2e03980498ee18cd953383dbc8af051d598bd767d").unwrap();
     let mut k = BigUint::from_bytes_be(&b); // big order
@@ -41,6 +45,22 @@ pub fn generate_key() -> PrivateKey {
         public_key: PublicKey { x, y },
         d: k,
     }
+}
+
+fn generate_seed() -> u8 {
+    // 获取当前时间（以纳秒为单位）
+    let time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos() as u64;
+
+    // 获取当前进程 ID
+    let pid = process::id() as u64;
+    // 使用哈希函数将时间和 PID 混合成一个种子
+    let mut hasher = DefaultHasher::new();
+    time.hash(&mut hasher);
+    pid.hash(&mut hasher);
+    (hasher.finish()%256) as u8
 }
 
 pub fn raw_pri_byte(private_key: PrivateKey) -> Vec<u8> {
@@ -96,7 +116,7 @@ pub fn bytes_to_public_key(bytes: Vec<u8>) -> PublicKey {
 }
 
 fn rand_field_element() -> BigUint {
-    let b: Vec<u8> = (0..BITSIZE / 8 + 8).map(|_| { rand::random::<u8>() }).collect();
+    let b: Vec<u8> = (0..BITSIZE / 8 + 8).map(|_| { generate_seed() }).collect();
     // fix random
     // let b = hex::decode("eb8ba241ff968e1ff212ee55eed16e08cf4e4047325fe0907e8d555a4640a3e1917a6f6de2aaca17").unwrap();
 
